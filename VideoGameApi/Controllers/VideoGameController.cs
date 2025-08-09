@@ -1,28 +1,27 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+using VideoGameApi.Data;
 
 namespace VideoGameApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class VideoGameController : ControllerBase
+    public class VideoGameController(VideoGameDbContext context) : ControllerBase
     {
-        static private List<VideoGame> videoGames = new List<VideoGame>
-        {
-            new VideoGame { Id = 1, Title = "The Legend of Zelda: Breath of the Wild", Genre = "Action-adventure", Platform = "Nintendo Switch", ReleaseDate = "March 3, 2017", Developer = "Nintendo EPD", Publisher = "Nintendo" },
-            new VideoGame { Id = 2, Title = "The Witcher 3: Wild Hunt", Genre = "Action role-playing", Platform = "PC, PS4, Xbox One, Nintendo Switch", ReleaseDate = "May 19, 2015", Developer = "CD Projekt Red", Publisher = "CD Projekt" },
-            new VideoGame { Id = 3, Title = "Minecraft", Genre = "Sandbox, Survival", Platform = "PC, Console, Mobile", ReleaseDate = "November 18, 2011", Developer = "Mojang Studios", Publisher = "Mojang Studios" }
-        };
+        private readonly VideoGameDbContext _context = context;
+
         [HttpGet]
-        public ActionResult<List<VideoGame>> GetVideoGames()
+        public async Task<ActionResult<List<VideoGame>>> GetVideoGames()
         {
-            return Ok(videoGames);
+            return Ok(await _context.VideoGames.ToListAsync());
         }
         [HttpGet]
         [Route("{id:int}")]
-        public ActionResult<VideoGame> GetVideoGame(int id)
+        public async Task<ActionResult<VideoGame>> GetVideoGame(int id)
         {
-            var videoGame = videoGames.FirstOrDefault(v => v.Id == id);
+            var videoGame = await _context.VideoGames.FindAsync(id);
             if (videoGame == null)
             {
                 return NotFound();
@@ -31,14 +30,14 @@ namespace VideoGameApi.Controllers
         }
 
         [HttpPost]
-        public ActionResult<VideoGame> AddVideoGame(VideoGame newGame)
+        public async Task<ActionResult<VideoGame>> AddVideoGame(VideoGame newGame)
         {
             if(newGame is null)
             {
                 return BadRequest("Video game data is null.");
             }
-            newGame.Id = videoGames.Max(g => g.Id) + 1;
-            videoGames.Add(newGame);
+            _context.VideoGames.Add(newGame);
+            await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetVideoGame), new { id = newGame.Id }, newGame);
         }
         [HttpPut("{id}")]
