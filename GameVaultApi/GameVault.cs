@@ -1,4 +1,4 @@
-﻿namespace VideoGameApi
+﻿namespace GameVaultApi
 {
     public class VideoGame
     {
